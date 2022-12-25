@@ -10,7 +10,7 @@ It's directory-based. So you can play any music as long as you can get its `.mp3
 
 ## Requirements
 
-- support for CXX 14
+- support for CXX 14 (haven't tested on Windows)
 - Git
 - Qt6
 - CMake >= 3.15.7
