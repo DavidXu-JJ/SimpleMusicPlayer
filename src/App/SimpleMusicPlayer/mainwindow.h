@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QString>
 #include <QTimer>
+#include <string>
 //#include <QMediaPlayer>
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
@@ -18,6 +19,7 @@ class MainWindow : public QMainWindow
 
 public:
     QStringList mp3List;
+    std::vector<std::string> playlist;
     QStringList names;
     int curr_idx;
     int total_number = 0;

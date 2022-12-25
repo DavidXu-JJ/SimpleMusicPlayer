@@ -1,10 +1,23 @@
 #include <QPushButton>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <QDebug>
 #include <QFileDialog>
-#include "unistd.h"
+#include <algorithm>
+#include <random>
 
+QString chop_sound_name(std::string s){
+    std::string rst;
+    for(int i = s.size() - 1; i >= 0; -- i){
+        if(s[i] == '.')
+            rst.clear();
+        else if (s[i] == '/')
+            break;
+        else rst.push_back(s[i]);
+    }
+    std::reverse(rst.begin(),rst.end());
+    QString qs(rst.c_str());
+    return qs;
+}
 
 void RecursiveGetMusic(const QString &root, const QStringList &filter, QStringList &rst, QStringList &names){
     QDir *dir = new QDir(root);
@@ -21,7 +34,6 @@ void RecursiveGetMusic(const QString &root, const QStringList &filter, QStringLi
     QList<QFileInfo> *fileInfoList= new QList<QFileInfo>(dir->entryInfoList(QDir::Files));
     for(int i = 0; i < fileInfoList->count(); ++ i){
         rst << fileInfoList->at(i).absoluteFilePath();
-        names << fileInfoList->at(i).fileName();
     }
 
     delete dir;
@@ -37,7 +49,7 @@ ma_result MainWindow::initialize_engine() {
 }
 
 void MainWindow::update_new_sound() {
-    ma_sound_init_from_file(&engine, mp3List.at(curr_idx).toStdString().c_str(), 0, NULL, NULL, &sound);
+    ma_sound_init_from_file(&engine, playlist[curr_idx].c_str(), 0, NULL, NULL, &sound);
     ma_sound_get_length_in_pcm_frames(&sound,&length);
     ma_sound_get_length_in_seconds(&sound,&length_sec);
     curr_sec = 0.f;
@@ -59,10 +71,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->Load, &QPushButton::clicked, [=](){
         QString dirpath = QFileDialog::getExistingDirectory(this,"pick a directory","./",QFileDialog::ShowDirsOnly);
-//        QDir dir(dirpath);
-//        dir.setNameFilters(filter);
-//        QStringList musicList = dir.entryList();
-//        qDebug()<<musicList;
         if(dirpath == curr_path) return;
         curr_path = dirpath;
         if(playing == true){
@@ -79,6 +87,16 @@ MainWindow::MainWindow(QWidget *parent) :
         RecursiveGetMusic(dirpath, filter, mp3List, names);
         curr_idx = 0;
         total_number = mp3List.size();
+        playlist.resize(total_number);
+        for(int i = 0; i < total_number; ++ i){
+            playlist[i] = mp3List.at(i).toStdString();
+        }
+        std::random_device rd;
+        std::mt19937 rdg(rd());
+        std::shuffle(playlist.begin(),playlist.end(),rdg);
+        for(int i=0;i<total_number;++i){
+            names << chop_sound_name(playlist[i]);
+        }
 
         update_new_sound();
 
@@ -141,7 +159,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
         ma_sound_set_volume(&sound,volume);
         ma_sound_start(&sound);
-//        printf("%lld, %lld,%d\n",length,time,ui->horizontalSlider->value());
     });
     connect(timer,SIGNAL(timeout()), this, SLOT(updateSlider()));
     timer->start(1000);
