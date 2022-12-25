@@ -9,8 +9,14 @@
 #
 # ----------------------------------------------------------------------------
 #
+# Dx_GroupSrcs(PATH <path> SOURCES <sources-list>
+# - create filters (relative to <path>) for sources
+#
+# ----------------------------------------------------------------------------
+#
 # Dx_GlobGroupSrcs(RST <rst> PATHS <paths-list>)
 # - recursively glob all sources in <paths-list>
+#   and call Dx_GroupSrcs(PATH <path> SOURCES <rst>) for each path in <paths-list>
 # - regex : .+\.(h|hpp|inl|in|c|cc|cpp|cxx)
 #
 # ----------------------------------------------------------------------------
@@ -129,6 +135,49 @@ function(_ExpandSources rst _sources)
     set(${rst} ${tmp_rst} PARENT_SCOPE)
 endfunction()
 
+function(Dx_GroupSrcs)
+    cmake_parse_arguments("ARG" "" "PATH" "SOURCES" ${ARGN})
+
+    set(headerFiles ${ARG_SOURCES})
+    list(FILTER headerFiles INCLUDE REGEX ".+\.(h|hpp|inl|in)$")
+
+    set(sourceFiles ${ARG_SOURCES})
+    list(FILTER sourceFiles INCLUDE REGEX ".+\.(c|cc|cpp|cxx)$")
+
+    set(qtFiles ${ARG_SOURCES})
+    list(FILTER qtFiles INCLUDE REGEX ".+\.(qrc|ui)$")
+
+    foreach(header ${headerFiles})
+        get_filename_component(headerPath "${header}" PATH)
+        file(RELATIVE_PATH headerPathRel ${ARG_PATH} "${headerPath}")
+        if(MSVC)
+            string(REPLACE "/" "\\" headerPathRelMSVC "${headerPathRel}")
+            set(headerPathRel "Header Files\\${headerPathRelMSVC}")
+        endif()
+        source_group("${headerPathRel}" FILES "${header}")
+    endforeach()
+
+    foreach(source ${sourceFiles})
+        get_filename_component(sourcePath "${source}" PATH)
+        file(RELATIVE_PATH sourcePathRel ${ARG_PATH} "${sourcePath}")
+        if(MSVC)
+            string(REPLACE "/" "\\" sourcePathRelMSVC "${sourcePathRel}")
+            set(sourcePathRel "Source Files\\${sourcePathRelMSVC}")
+        endif()
+        source_group("${sourcePathRel}" FILES "${source}")
+    endforeach()
+
+    foreach(qtFile ${qtFiles})
+        get_filename_component(qtFilePath "${qtFile}" PATH)
+        file(RELATIVE_PATH qtFilePathRel ${ARG_PATH} "${qtFilePath}")
+        if(MSVC)
+            string(REPLACE "/" "\\" qtFilePathRelMSVC "${qtFilePathRel}")
+            set(qtFilePathRel "Qt Files\\${qtFilePathRelMSVC}")
+        endif()
+        source_group("${qtFilePathRel}" FILES "${qtFile}")
+    endforeach()
+endfunction()
+
 function(Dx_GlobGroupSrcs)
     cmake_parse_arguments("ARG"
             ""
@@ -151,6 +200,7 @@ function(Dx_GlobGroupSrcs)
                 "${path}/*.ui"
                 )
         list(APPEND sources ${pathSources})
+        Dx_GroupSrcs(PATH ${path} SOURCES ${pathSources})
     endforeach()
     set(${ARG_RST} ${sources} PARENT_SCOPE)
 endfunction()
