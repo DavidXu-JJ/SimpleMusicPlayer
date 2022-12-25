@@ -29,7 +29,7 @@ include(Dx_InitQt)
 
 Dx_InitGit()
 Dx_UpdateSubModule()
-Dx_InitQt(COMPONENTS Core Gui Widgets)
+Dx_InitQt(COMPONENTS Widgets)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/external/miniaudio")
 
