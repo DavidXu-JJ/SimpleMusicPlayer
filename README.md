@@ -22,7 +22,7 @@ git clone https://github.com/DavidXu-JJ/SimpleMusicPlayer.git
 cd SimpleMusicPlayer
 cmake -B build
 cd build
-make
+make -j
 ```
 
 The binary executable will be located at `${your_path}/SimpleMusicPlayer/bin`
